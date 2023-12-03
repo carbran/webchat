@@ -2,26 +2,27 @@
 # Sistema de Chat em Tempo Real com Laravel WebSockets
 ## Conteúdos
 - [Sistema de Chat em Tempo Real com Laravel WebSockets](#sistema-de-chat-em-tempo-real-com-laravel-websockets)
-	- [Conteúdos](#conteúdos)
-	- [Projeto](#projeto)
-		- [Linguagens](#linguagens)
-		- [Frameworks](#frameworks)
-		- [Ferramentas auxiliares](#ferramentas-auxiliares)
-	- [Instalação no WSL UBUNTU 20.04](#instalação-no-wsl-ubuntu-2004)
-		- [Instalando Javascript e seus managers](#instalando-javascript-e-seus-managers)
-		- [Instalando Laravel Jetstream com Inertia.js](#instalando-laravel-jetstream-com-inertiajs)
-			- [PHP](#php)
-			- [Composer](#composer)
-			- [Laravel](#laravel)
-		- [Jetstream e Inertia.js](#jetstream-e-inertiajs)
-	- [NGINX](#nginx)
-	- [MYSQL](#mysql)
-	- [Docker](#docker)
-		- [Fixando alguns conceitos básicos do Docker: Containeres e Imagens](#fixando-alguns-conceitos-básicos-do-docker-containeres-e-imagens)
-		- [Dockerfile e Docker Compose](#dockerfile-e-docker-compose)
-		- [Volumes](#volumes)
-	- [Conectando ao Banco de Dados](#conectando-ao-banco-de-dados)
-	- [Referências](#referências)
+  - [Conteúdos](#conteúdos)
+  - [Projeto](#projeto)
+    - [Linguagens](#linguagens)
+    - [Frameworks](#frameworks)
+    - [Ferramentas auxiliares](#ferramentas-auxiliares)
+  - [Instalação no WSL UBUNTU 20.04](#instalação-no-wsl-ubuntu-2004)
+    - [Instalando Javascript e seus managers](#instalando-javascript-e-seus-managers)
+    - [Instalando Laravel Jetstream com Inertia.js](#instalando-laravel-jetstream-com-inertiajs)
+      - [PHP](#php)
+      - [Composer](#composer)
+      - [Laravel](#laravel)
+    - [Jetstream e Inertia.js](#jetstream-e-inertiajs)
+  - [NGINX](#nginx)
+  - [MYSQL](#mysql)
+  - [Docker](#docker)
+    - [Fixando alguns conceitos básicos do Docker: Containeres e Imagens](#fixando-alguns-conceitos-básicos-do-docker-containeres-e-imagens)
+    - [Dockerfile e Docker Compose](#dockerfile-e-docker-compose)
+    - [Volumes](#volumes)
+  - [Conectando ao Banco de Dados](#conectando-ao-banco-de-dados)
+    - [Declarações Adicionais no Dockerfile](#declarações-adicionais-no-dockerfile)
+  - [Referências](#referências)
 
 ## Projeto
 
@@ -546,6 +547,131 @@ DB_PORT=3306
 DB_DATABASE=laravel
 DB_USERNAME=root
 DB_PASSWORD=laravel
+~~~
+
+Vamos testar a conexão entrando no container com o comando:
+
+~~~bash
+# após o -it é o nome do seu container que vc pode ver com o comando docker ps na coluna NAMES
+docker exec -it webchat-laravel-app-1 bash
+
+# dentro do container
+cd /usr/share/nginx
+
+php artisan migrate
+~~~
+
+Agora, deveremos criar o volume no mysql-app, para que o nosso banco não seja perdido caso "matarmos” o nosso container.
+
+Criaremos uma pasta oculta chamada .docker quando declararmos o nosso volume:
+
+~~~yaml
+volumes:
+  - .docker/dbdata:/var/lib/mysql
+~~~
+
+Na prática, ficará assim em nossa IDE:
+
+~~~yaml
+version: '3'
+
+services:
+  laravel-app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/usr/share/nginx
+    networks:
+      - app-network
+
+  mysql-app:
+    image: mysql:5.7.22
+    ports:
+      - "3306:3306"
+    volumes:
+      - .docker/dbdata:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: laravel
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+~~~
+
+Se pararmos o nosso container e depois subirmos novamente, poderemos verificar que um novo arquivo foi adicionado em nossa IDE:
+
+~~~bash
+# saia do container
+exit
+
+# pare o container
+docker-compose down
+
+# suba o container novamente
+docker-compose up -d --build
+
+# após isso a pasta .docker estará presente no repositório do projeto
+~~~
+
+Se dermos novamente um php artisan migrate, aparecerá a informação de que não temos novos arquivos, pois já estarão salvos em nossa máquina:
+
+~~~bash
+# após o -it é o nome do seu container que vc pode ver com o comando docker ps na coluna NAMES
+docker exec -it webchat-laravel-app-1 bash
+
+# dentro do container
+cd /usr/share/nginx
+
+php artisan migrate
+~~~
+
+É importante explicar que, caso esteja utilizando o Windows, recomenda-se uma declaração específica em nosso docker-compose.yaml:
+
+~~~yaml
+command: --innodb-use-native-aio=0
+~~~
+
+Sem essa declaração, para usuários do Windows, provavelmente o volume do nosso mysql-app não será montado da forma correta. Agora, nossa aplicação Laravel já está pronta e totalmente disponível para desenvolvermos o nosso projeto.
+
+### Declarações Adicionais no Dockerfile
+
+- **WORKDIR**: “A instrução WORKDIR define um diretório de trabalho para outras instruções Dockerfile, como RUN, CMD e também o diretório de trabalho para executar instâncias da imagem do container.” (Fonte:www.docker.com). Nosso Dockerfile ficará assim:
+
+~~~yaml
+FROM wyveo/nginx-php-fpm:latest
+WORKDIR /usr/share/nginx/
+~~~
+
+- **RUN**: “A instruçãoRUNespecifica os comandos a serem executados e capturados na nova imagem de contêiner. Esses comandos podem incluir itens como a instalação de software, a criação de arquivos e diretórios e a criação da configuração do ambiente.” (Fonte: www.docker.com) Como exemplo, em nossa aplicação:
+
+~~~yaml
+FROM wyveo/nginx-php-fpm:latest
+WORKDIR /usr/share/nginx/
+RUN rm -rf /usr/share/ngix/html
+RUN ln -s public html
+~~~
+
+A declaração RUN rm -rf /usr/share/ngix/html elimina a pasta html
+
+A declaração RUN ln -s public html cria automaticamente o link simbólico.
+
+- **COPY**: “A COPY é uma instrução que copia os arquivos e diretórios para o sistema de arquivos do container. Os arquivos e diretórios devem estar em um caminho relativo ao Dockerfile.” (Fonte: www.docker.com). Iremos abordar essa declaração de forma detalhada em nosso projeto, quando realizarmos o build da imagem para o Docker Hub.
+
+- **ADD**: “A instrução ADD é como a instrução de cópia, mas com ainda mais recursos. Além de copiar arquivos do host para a imagem de contêiner, a instrução ADD também pode copiar arquivos de um local remoto com uma especificação de URL.” (Fonte: www.docker.com).
+
+- **CMD**: “A instrução CMD define o comando padrão a ser executado durante a implantação de uma instância da imagem do contêiner. Por exemplo, se o contêiner estiver hospedando um servidor Web NGINX, o CMD pode incluir instruções para iniciar o servidor Web com um comando como nginx.exe. Se várias instruções CMD forem especificadas em um Dockerfile, somente a última será avaliada.”(Fonte:www.docker.com).
+ 
+Em nosso projeto, o resultado será:
+
+~~~yaml
+FROM wyveo/nginx-php-fpm:latest
+WORKDIR /usr/share/nginx/
+RUN rm -rf /usr/share/ngix/html
+RUN ln -s public html
 ~~~
 
 ## Referências
