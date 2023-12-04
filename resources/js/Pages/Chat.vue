@@ -16,61 +16,15 @@ import AppLayout from '@/Layouts/AppLayout.vue';
                     <!-- list users -->
                     <div class="w-3/12 bg-gray-200 dark:bg-gray-800 bg-opacity-25 border-r border-gray-200 dark:border-gray-600 overflow-y-scroll">
                         <ul>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
+                            <li v-for = "user in users" :key="user.id"
+                            @click="() => {loadMessages(user.id)}"
+                            class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
                                 <p class="flex items-center">
-                                    Hiago Donha
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
+                                    {{ user.name}}
                                     <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
                                 </p>
                             </li>
                             
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
-                            <li class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
-                                <p class="flex items-center">
-                                    Fernando Costa
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
-                                </p>
-                            </li>
                         </ul>
                     </div>
 
@@ -79,58 +33,16 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
                         <!-- messages -->
                         <div class="w-full p-6 flex flex-col overflow-y-scroll">
-                            <div class="w-full mb-3 text-right">
-                                <p class="inline-block p-2 rounded-md messageFromMe" style="max-width: 75%;">
-                                    Olá!
+                            <div v-for="message in messages" :key="message.id"
+                                :class="(message.from_user == $page.props.auth.user.id) ? 'text-right' : ''"
+                                class="w-full mb-3">
+                                <p :class="(message.from_user == $page.props.auth.user.id) ? 'messageFromMe' : 'messageToMe'"
+                                    class="inline-block p-2 rounded-md messageFromMe" style="max-width: 75%;">
+                                    {{message.content}}
                                 </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
+                                <span class="block mt-1 text-xs text-gray-500">{{message.created_at}}</span>
                             </div>
-
-                            <div class="w-full mb-3">
-                                <p class="inline-block p-2 rounded-md messageToMe" style="max-width: 75%;">
-                                    Oi!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-                            <div class="w-full mb-3 text-right">
-                                <p class="inline-block p-2 rounded-md messageFromMe" style="max-width: 75%;">
-                                    Olá!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-
-                            <div class="w-full mb-3">
-                                <p class="inline-block p-2 rounded-md messageToMe" style="max-width: 75%;">
-                                    Oi!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-                            <div class="w-full mb-3 text-right">
-                                <p class="inline-block p-2 rounded-md messageFromMe" style="max-width: 75%;">
-                                    Olá!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-
-                            <div class="w-full mb-3">
-                                <p class="inline-block p-2 rounded-md messageToMe" style="max-width: 75%;">
-                                    Oi!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-                            <div class="w-full mb-3 text-right">
-                                <p class="inline-block p-2 rounded-md messageFromMe" style="max-width: 75%;">
-                                    Olá!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
-
-                            <div class="w-full mb-3">
-                                <p class="inline-block p-2 rounded-md messageToMe" style="max-width: 75%;">
-                                    Oi!
-                                </p>
-                                <span class="block mt-1 text-xs text-gray-500">03/12/2023 00:18</span>
-                            </div>
+                            
                         </div>
 
                         <!-- form -->
@@ -164,7 +76,15 @@ import axios from 'axios';
 export default {
     data() {
         return {
-            users: []
+            users: [],
+            messages: []
+        }
+    },
+    methods: {
+        loadMessages: function(userId) {
+            axios.get(`api/messages/${userId}`).then(response =>{
+                this.messages = response.data.messages;
+            })
         }
     },
     mounted() {
