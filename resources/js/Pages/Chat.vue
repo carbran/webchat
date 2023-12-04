@@ -73,8 +73,9 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 </style>
 
 <script>
-import axios from 'axios';
+import axios from 'axios'
 import moment from 'moment'
+import store from '../store'
 
 moment.locale("pt-br");
 
@@ -85,6 +86,11 @@ export default {
             messages: [],
             userActive: null,
             message: []
+        }
+    },
+    computed: {
+        user() {
+            return store.state.user
         }
     },
     methods: {
@@ -112,7 +118,7 @@ export default {
                 'to_user': this.userActive.id
             }).then(response => {
                 this.messages.push({
-                    'from_user': 1,//this.user.id,
+                    'from_user': this.user.id,
                     'to_user': this.userActive.id,
                     'content': this.message,
                     'created_at': new Date().toISOString(),
