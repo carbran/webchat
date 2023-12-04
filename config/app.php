@@ -70,6 +70,7 @@ return [
     |
     */
 
+    // 'timezone' => 'UTC',
     'timezone' => 'America/Sao_Paulo',
 
     /*
@@ -141,7 +142,7 @@ return [
 
     'maintenance' => [
         'driver' => 'file',
-        // 'store'  => 'redis',
+        // 'store' => 'redis',
     ],
 
     /*

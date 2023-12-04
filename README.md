@@ -14,14 +14,10 @@
       - [Composer](#composer)
       - [Laravel](#laravel)
     - [Jetstream e Inertia.js](#jetstream-e-inertiajs)
-  - [NGINX](#nginx)
-  - [MYSQL](#mysql)
   - [Docker](#docker)
-    - [Fixando alguns conceitos básicos do Docker: Containeres e Imagens](#fixando-alguns-conceitos-básicos-do-docker-containeres-e-imagens)
-    - [Dockerfile e Docker Compose](#dockerfile-e-docker-compose)
-    - [Volumes](#volumes)
-  - [Conectando ao Banco de Dados](#conectando-ao-banco-de-dados)
-    - [Declarações Adicionais no Dockerfile](#declarações-adicionais-no-dockerfile)
+  - [MYSQL](#mysql)
+  - [Criando container com MySQL Server](#criando-container-com-mysql-server)
+    - [Se conectando no MySQL Server e configurando senha](#se-conectando-no-mysql-server-e-configurando-senha)
   - [Referências](#referências)
 
 ## Projeto
@@ -193,42 +189,8 @@ Após instalado é preciso instalar as dependências do projeto com os seguintes
 ~~~bash
 npm install
 npm run build
-php artisan migrate -- problema, preciso ter um banco configurado no wsl para poder rodar o migrate
+php artisan migrate # esse comando só funcionará após o banco está online e indicado no .env
 ~~~
-
-## NGINX
-
-O Nginx (pronunciado "engine x") é um servidor web de código aberto que também pode ser utilizado como proxy reverso, balanceador de carga, servidor de email proxy HTTP e servidor de cache. Ele foi criado por Igor Sysoev e lançado pela primeira vez em 2004. Desde então, o Nginx se tornou amplamente popular e é usado por muitos sites de alto tráfego, serviços online e aplicativos web.
-
-Verifique se o nginx está instalado, se estiver, esse comando servirá para verificar se ele está ativo:
-
-~~~bash
-sudo service nginx status
-~~~
-
-Caso não tenha ele instalado você deve instalar com os comandos:
-
-~~~bash
-sudo apt update
-sudo apt install nginx
-~~~
-
-Para iniciar o serviço você deve escrever:
-
-~~~bash
-sudo service nginx start
-~~~
-
-E para verificar seu status basta usar o primeiro comando novamente:
-
-~~~bash
-sudo service nginx status
-~~~
-
-## MYSQL
-
-O MySQL é um sistema de gerenciamento de banco de dados relacional (SGBDR) que foi inicialmente lançado em 1995. Ele é um dos sistemas de gerenciamento de banco de dados mais populares e amplamente utilizados no mundo, conhecido por sua confiabilidade, desempenho e facilidade de uso.
-
 
 ## Docker
 
@@ -236,456 +198,125 @@ Para instalar o Docker no WSL (Windows Subsystem for Linux) no Ubuntu, você pod
 
 	Observação: Certifique-se de que você tenha o WSL ativado no seu sistema Windows. Você pode ativá-lo nas configurações do Windows.
 
-1. Abra o terminal do Ubuntu no WSL.
-
-2. Atualize o índice de pacotes do sistema:
+Caso não tenha o Docker instalado ainda, abra o terminal e atualize os pacotes:
 
 ~~~bash
-sudo apt update
+sudo apt-get update
 ~~~
 
-3. Instale pacotes pré-requisitos que permitem ao sistema apt usar pacotes via HTTPS:
+Instale esses pacotes:
 
 ~~~bash
-sudo apt install apt-transport-https ca-certificates curl software-properties-common
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
 ~~~
 
-4. Adicione a chave GPG oficial do Docker:
+Adicione a GPG key oficial do Docker:
 
 ~~~bash
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/
-keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ~~~
 
-5. Adicione o repositório Docker ao seu sistema:
+Adicione o repositório:
 
 ~~~bash
-echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/
-linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
 ~~~
 
-6. Atualize novamente o índice de pacotes do sistema para incluir o novo repositório:
+Atualize os pacotes novamente e adicione o Docker Engine:
 
 ~~~bash
-sudo apt update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
 ~~~
 
-7. Instale a versão mais recente do Docker:
+Para evitar ter que usar o sudo o tempo todo, crie um grupo docker e adicione seu user no grupo:
 
 ~~~bash
-sudo apt install docker-ce docker-ce-cli containerd.io
+$ sudo groupadd docker
+$ sudo usermod -aG docker $USER
+$ newgrp docker
 ~~~
 
-8. Adicione seu usuário ao grupo "docker" para executar comandos Docker sem a necessidade de sudo:
+Abra e feche o terminal, depois rode
 
 ~~~bash
-sudo usermod -aG docker $USER
+docker run hello-world
 ~~~
-Após esse comando, saia e entre novamente na sessão do WSL ou reinicie o WSL.
 
-9. Verifique se a instalação foi bem-sucedida executando o seguinte comando:
+Para checar que está tudo ok.
+
+## MYSQL
+
+O MySQL é um sistema de gerenciamento de banco de dados relacional (SGBDR) que foi inicialmente lançado em 1995. Ele é um dos sistemas de gerenciamento de banco de dados mais populares e amplamente utilizados no mundo, conhecido por sua confiabilidade, desempenho e facilidade de uso.
+
+## Criando container com MySQL Server
+
+Para criar um container com o MySQL faça o seguinte:
 
 ~~~bash
-docker --version
+docker run -p 3306:3306 --name=seu-container -d mysql/mysql-server
 ~~~
-Agora você deve ter o Docker instalado e pronto para ser usado no seu ambiente WSL Ubuntu. Certifique-se de que o daemon do Docker está em execução antes de tentar usar comandos Docker:
+
+Esse comando roda um container chamado “seu-container” a partir de uma imagem do MySQL Server e mapeia a porta 3306 do container com a sua de mesmo número. Dê um docker ps e veja o que tem rodando na sua máquina.
+
+### Se conectando no MySQL Server e configurando senha
+
+Pegue a senha randômica gerada:
 
 ~~~bash
-sudo service docker start
-~~~
-Isso deve permitir que você comece a usar o Docker no seu ambiente WSL.
-
-### Fixando alguns conceitos básicos do Docker: Containeres e Imagens
-
-- **Container**: é o local onde a sua aplicação ficará rodando.
-
-- **Imagem**: É como um snapshot. Outros desenvolvedores com acesso a esta imagem, terão os mesmos recursos que você utiliza e configurou em seu container.
-
-Para que você possa trabalhar com o Docker, é extremamente necessário que você conheça seus principais comandos. Vamos lá!
-
-O primeiro comando é o **_docker ps_** , esse comando irá lhe mostrar quais o containers foram criados e estão rodando.
-
-Um segundo comando, muito importante, é o **_docker images_** , esse comando mostra quais imagens foram criadas.
-
-### Dockerfile e Docker Compose
-
-Durante essa nossa jornada, trabalharemos com um arquivo chamado de Dockerfile.
-
-- **Dockerfile**: "O Dockerfile é um arquivo de texto que contém as instruções necessárias para criar uma nova imagem de contêiner. Essas instruções incluem a identificação de uma imagem existente a ser usada como uma base, comandos a serem executados durante o processo de criação da imagem e um comando que será executado quando novas instâncias da imagem de contêiner forem implantadas.”
-(Fonte: www.docker.com)
-
-Vamos então criar um arquivo chamado Dockerfile no projeto.
-
-Por padrão, utilizaremos uma imagem Docker que nos trará o PHP-FPM e o Nginx já configurados. Você poderá encontrar essa imagem acessando https://hub.docker.com¹ e pesquisando por wyveo/nginx-php-fpm.
-
-Em nossa IDE, no arquivo Dockerfile que criamos, inserimos o seguinte código:
-
-~~~yaml
-FROM wyveo/nginx-php-fpm:latest
+docker logs seu-container 2>&1 | grep GENERATED
 ~~~
 
-A instrução **_FROM_** define a imagem de container que será usada durante o processo de criação de nova imagem, wyveo/nginx-php-fpm é o endereço da imagem e _latest_ indica que queremos a versão mais atual dessa imagem.
-
-É necessário explicar que esse código traz uma instalação crua do nginx com PHP-FPM. Por padrão, o nginx, quando instalado dessa forma, mantém seu Document Root no seguinte caminho:
+Copie a root password que apareceu e rode o comando:
 
 ~~~bash
-/usr/share/nginx/html
+docker exec -it seu-container mysql -uroot -p
 ~~~
 
-- **Docker-compose**: O docker-compose é uma ferramenta do Docker que, a partir de diversas especificações, permite subir diversos containeres e relacioná-los através de redes internas.
-
-O docker-compose é uma ferramenta separada do Docker, embora frequentemente usada em conjunto. Enquanto o Docker é utilizado para criar, gerenciar e executar contêineres individuais, o docker-compose é utilizado para definir e executar aplicativos compostos por vários contêineres.
-
-O docker-compose permite que você defina as configurações de vários contêineres em um arquivo YAML (geralmente chamado de docker-compose.yml) e, em seguida, inicie esses contêineres com um único comando. Ele é especialmente útil quando você tem uma aplicação composta por vários serviços, cada um em seu próprio contêiner, e precisa orquestrá-los de maneira eficiente.
-
-Se você não tem o docker-compose instalado, você precisará instalá-lo separadamente. Aqui estão os passos para instalar o docker-compose no WSL (Ubuntu):
-
-1. Baixe a versão mais recente do docker-compose:
+Cole a password e dê enter. Depois disso, já no server, digite:
 
 ~~~bash
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+ALTER USER 'root'@'localhost' IDENTIFIED BY '12345';
 ~~~
 
-Certifique-se de que o arquivo docker-compose seja executável:
+Isso vai mudar a senha padrão do usuário para 12345. Depois rode o seguinte:
 
 ~~~bash
-sudo chmod +x /usr/local/bin/docker-compose
+update mysql.user set host = '%' where user='root';
 ~~~
 
-2. Verifique se o docker-compose foi instalado corretamente:
+Esse comando vai permitir que você conecte o Workbench no container. Dê um ctrl-D e depois um 
 
 ~~~bash
-docker-compose --version
+docker restart seu-container
 ~~~
 
-Agora você deverá conseguir usar o comando docker-compose. Este comando é valioso ao lidar com projetos que envolvem vários contêineres, facilitando a definição, execução e gerenciamento desses contêineres como uma aplicação única.
+Para se conectar ao mysql você deve usar as seguintes configurações:
 
-Para isso, vamos iniciar criando um arquivo chamado de docker-compose.yaml.
+- host: localhost
+- username: root
+- port: 3306
+- password: 12345 (ou aquele que você tiver configurado)
 
-No arquivo docker-compose, declaramos a seguinte estrutura:
-
-~~~yaml
-version: '3'
-
-services:
-  laravel-app:
-    build: .
-    ports:
-      - "8080:80"
-~~~
-
-_version_: declara a versão do docker compose
-
-_services_: declara quais serviços serão rodados, nesse caso, chamaremos de laravel-app.
-
-_build_: declara o nome da imagem, ou, no caso, se declararmos o ., ele irá “chamar” a imagem declarada no Dockerfile.
-
-_ports_: realiza a liberação das portas. Nesse exemplo, queremos que seja liberada a porta 8080, porém, quando acessada, seja feito um redirecionamento para a porta 80 de nosso container. Logo, toda vez que acessarmos o localhost com a porta 8080 o Docker redirecionará a requisição para a porta 80 do nginx criado no container.
-
-Acessando o nosso terminal, subiremos o container com o comando:
+Também é necessário instalar o pacote php-mysql para se conectar ao banco de dados:
 
 ~~~bash
-docker-compose up -d
+sudo apt-get install php-mysql
 ~~~
 
-O docker-compose up irá rodar o docker-compose, baseado em nosso docker-compose.yaml e com o -d o container é inicializado em segundo plano e podemos utilizar o nosso terminal para outros comandos.
-
-Acessamos o nosso browser e já podemos ver o nosso nginx rodando.
-
-Lembando que, em nosso docker-compose.yaml, indicamos que acessaremos a porta 8080 de nossa máquina e essa acessará a porta 80 do nosso container.
-
-Você pode usar os comandos _docker ps_ e _docker images_ para ver o docker rodando.
-
-### Volumes
-
-O Docker possui um mecanismo de gerenciamento de volumes que com ele é possível compartilharmos um volume da nossa máquina com o container.
-
-Em nosso docker-compose.yaml iremos declarar:
-
-~~~yaml
-    volumes:
-      - ./:/usr/share/nginx
-~~~
-
-Quando criamos esse volume, tudo o que estiver em nossa pasta será montado dentro do nosso container, ou seja, tudo o que modificarmos em nossa pasta será compartilhado com o container, porém, caso “matarmos” o container, ainda teremos os arquivos em nossa máquina.
-
-E assim fica o nosso docker-compose.yaml:
-
-~~~yaml
-version: '3'
-
-services:
-  laravel-app:
-    build: .
-    ports:
-      - "8080:80"
-    volumes:
-      - ./:/usr/share/nginx
-~~~
-
-Vamos testar? Com o comando abaixo subiremos as modificações realizadas em nosso docker-compose.yaml:
+Apenas após esses passos você deve rodar:
 
 ~~~bash
-docker-compose up -d --build
-~~~
-
-Para evitar que tenhamos um erro 404 ou 500 no nginx (pois ele está buscando por padrão a pasta html), criaremos um link simbólico apontando a pasta public de nosso projeto Laravel para html.
-
-Esse link simbólico é criado rodando: ln -s public html em seu terminal. O link simbólico, na verdade, funciona como um atalho, pois toda vez que acessarmos a pasta html na verdade estaremos acessando a pasta public:
-
-~~~bash
-ln -s public html
-~~~
-
-Note a pasta html:
-
-~~~bash
-ls
-~~~
-
-Agora, finalmente podemos visualizar a imagem do Laravel sendo executada no navegador.
-
-## Conectando ao Banco de Dados
-
-Agora que já temos o nosso Laravel rodando, iremos realizar algumas declarações em nosso dockercompose.yaml. Criaremos um serviço chamado: 
-~~~yaml
-mysql-app:
-~~~
-
-Nesse serviço vamos declarar que utilizaremos uma imagem do MySQL. Essa imagem pode ser
-facilmente encontrada no https://hub.docker.com².
-
-~~~yaml
-image: mysql:5.7.22
-~~~
-
-O nosso MySQL também utilizará portas:
-
-~~~yaml
-ports:
-  - "3306:3306"
-~~~
-
-Com essa declaração estamos dizendo que, tanto a porta de nossa máquina quanto a porta de nosso
-container serão as mesmas.
-
-A imagem do MySQL foi preparada para que possamos trabalhar com variáveis de ambiente. Utilizaremos uma variável de ambiente que cria o banco de dados com uma senha, facilitando todo
-o trabalho.
-
-~~~yaml
-environment:
-  MYSQL_DATABASE: laravel
-  MYSQL_ROOT_PASSWORD: laravel
-~~~
-
-Dando prosseguimento, para que essas máquinas possam conversar entre si, é necessário que
-compartilhemos uma rede interna:
-
-~~~yaml
-networks:
-  - app-network
-~~~
-
-Esse serviço deve ser criado em nosso _laravel-app_ e em nosso _mysql-app_.
-
-Declaramos, também, fora dos serviços a criação da rede propriamente dita:
-
-~~~yaml
-networks:
-  app-network:
-    driver: bridge
-~~~
-
-Esse é o resultado final:
-
-~~~yaml
-version: '3'
-
-services:
-  laravel-app:
-    build: .
-    ports:
-      - "8080:80"
-    volumes:
-      - ./:/usr/share/nginx
-    networks:
-      - app-network
-
-  mysql-app:
-    image: mysql:5.7.22
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: laravel
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
-~~~
-
-Pronto para testar? Primeiro, vamos derrubar nosso container:
-
-~~~bash
-docker-compose down
-~~~
-
-Em seguida, subimos novamente:
-
-~~~bash
-docker-compose up -d --build
-~~~
-
-Agora, para que o Laravel possa se conectar com o container do MySQL, vamos rapidamente editar o arquivo .env de nosso projeto. Ele é responsável por todas as configurações desse framework. Nesse caso, vamos alterar as credenciais de acesso ao banco de dados de acordo com o que foi informado no docker-compose.yaml. Ele deve ficar assim:
-
-~~~
-DB_CONNECTION=mysql
-DB_HOST=mysql-app
-DB_PORT=3306
-DB_DATABASE=laravel
-DB_USERNAME=root
-DB_PASSWORD=laravel
-~~~
-
-Vamos testar a conexão entrando no container com o comando:
-
-~~~bash
-# após o -it é o nome do seu container que vc pode ver com o comando docker ps na coluna NAMES
-docker exec -it webchat-laravel-app-1 bash
-
-# dentro do container
-cd /usr/share/nginx
-
 php artisan migrate
-~~~
-
-Agora, deveremos criar o volume no mysql-app, para que o nosso banco não seja perdido caso "matarmos” o nosso container.
-
-Criaremos uma pasta oculta chamada .docker quando declararmos o nosso volume:
-
-~~~yaml
-volumes:
-  - .docker/dbdata:/var/lib/mysql
-~~~
-
-Na prática, ficará assim em nossa IDE:
-
-~~~yaml
-version: '3'
-
-services:
-  laravel-app:
-    build: .
-    ports:
-      - "8080:80"
-    volumes:
-      - ./:/usr/share/nginx
-    networks:
-      - app-network
-
-  mysql-app:
-    image: mysql:5.7.22
-    ports:
-      - "3306:3306"
-    volumes:
-      - .docker/dbdata:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: laravel
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
-~~~
-
-Se pararmos o nosso container e depois subirmos novamente, poderemos verificar que um novo arquivo foi adicionado em nossa IDE:
-
-~~~bash
-# saia do container
-exit
-
-# pare o container
-docker-compose down
-
-# suba o container novamente
-docker-compose up -d --build
-
-# após isso a pasta .docker estará presente no repositório do projeto
-~~~
-
-Se dermos novamente um php artisan migrate, aparecerá a informação de que não temos novos arquivos, pois já estarão salvos em nossa máquina:
-
-~~~bash
-# após o -it é o nome do seu container que vc pode ver com o comando docker ps na coluna NAMES
-docker exec -it webchat-laravel-app-1 bash
-
-# dentro do container
-cd /usr/share/nginx
-
-php artisan migrate
-~~~
-
-É importante explicar que, caso esteja utilizando o Windows, recomenda-se uma declaração específica em nosso docker-compose.yaml:
-
-~~~yaml
-command: --innodb-use-native-aio=0
-~~~
-
-Sem essa declaração, para usuários do Windows, provavelmente o volume do nosso mysql-app não será montado da forma correta. Agora, nossa aplicação Laravel já está pronta e totalmente disponível para desenvolvermos o nosso projeto.
-
-### Declarações Adicionais no Dockerfile
-
-- **WORKDIR**: “A instrução WORKDIR define um diretório de trabalho para outras instruções Dockerfile, como RUN, CMD e também o diretório de trabalho para executar instâncias da imagem do container.” (Fonte:www.docker.com). Nosso Dockerfile ficará assim:
-
-~~~yaml
-FROM wyveo/nginx-php-fpm:latest
-WORKDIR /usr/share/nginx/
-~~~
-
-- **RUN**: “A instruçãoRUNespecifica os comandos a serem executados e capturados na nova imagem de contêiner. Esses comandos podem incluir itens como a instalação de software, a criação de arquivos e diretórios e a criação da configuração do ambiente.” (Fonte: www.docker.com) Como exemplo, em nossa aplicação:
-
-~~~yaml
-FROM wyveo/nginx-php-fpm:latest
-WORKDIR /usr/share/nginx/
-RUN rm -rf /usr/share/ngix/html
-RUN ln -s public html
-~~~
-
-A declaração RUN rm -rf /usr/share/ngix/html elimina a pasta html
-
-A declaração RUN ln -s public html cria automaticamente o link simbólico.
-
-- **COPY**: “A COPY é uma instrução que copia os arquivos e diretórios para o sistema de arquivos do container. Os arquivos e diretórios devem estar em um caminho relativo ao Dockerfile.” (Fonte: www.docker.com). Iremos abordar essa declaração de forma detalhada em nosso projeto, quando realizarmos o build da imagem para o Docker Hub.
-
-- **ADD**: “A instrução ADD é como a instrução de cópia, mas com ainda mais recursos. Além de copiar arquivos do host para a imagem de contêiner, a instrução ADD também pode copiar arquivos de um local remoto com uma especificação de URL.” (Fonte: www.docker.com).
-
-- **CMD**: “A instrução CMD define o comando padrão a ser executado durante a implantação de uma instância da imagem do contêiner. Por exemplo, se o contêiner estiver hospedando um servidor Web NGINX, o CMD pode incluir instruções para iniciar o servidor Web com um comando como nginx.exe. Se várias instruções CMD forem especificadas em um Dockerfile, somente a última será avaliada.”(Fonte:www.docker.com).
- 
-Em nosso projeto, o resultado será:
-
-~~~yaml
-FROM wyveo/nginx-php-fpm:latest
-WORKDIR /usr/share/nginx/
-RUN rm -rf /usr/share/ngix/html
-RUN ln -s public html
 ~~~
 
 ## Referências
 
-https://www.treinaweb.com.br/blog/criando-um-ambiente-de-desenvolvimento-php-com-wsl  
-https://tecadmin.net/how-to-install-nvm-on-ubuntu-20-04/  
-https://getcomposer.org/download/  
-https://laravel.com/docs/10.x  
-https://jetstream.laravel.com/introduction.html  
-https://laravel.com/docs/5.8/installation  
-https://nodejs.org/en/docs  
-https://docs.npmjs.com  
-https://github.com/nvm-sh/nvm  
-https://vuejs.org/guide/introduction.html  
-https://vuex.vuejs.org  
-https://inertiajs.com  
-https://tailwindcss.com/docs/installation  
+https://dev.to/nfo94/como-criar-um-container-com-mysql-server-com-docker-e-conecta-lo-no-workbench-linux-1blf
