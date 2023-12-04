@@ -24,4 +24,5 @@ Route::group(['middleware' => [
     'verified',
 ]], function(){
     Route::get('/dashboard',[PageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/chat',[PageController::class, 'chat'])->name('chat');
 });

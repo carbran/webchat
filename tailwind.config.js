@@ -19,6 +19,7 @@ export default {
             },
         },
     },
-
+    darkMode: 'class',
+    variants: ['hover'],
     plugins: [forms, typography],
 };
