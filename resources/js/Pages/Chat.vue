@@ -22,7 +22,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
                             class="p-6 text-lg text-gray-600 dark:text-gray-200 leading-7 font-semibold border-b border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 hover:bg-opacity-50 hover:cursor-pointer">
                                 <p class="flex items-center">
                                     {{ user.name}}
-                                    <span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    <span v-if="user.notification" class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
                                 </p>
                             </li>
                             
@@ -76,6 +76,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios'
 import moment from 'moment'
 import store from '../store'
+import Echo from 'laravel-echo';
+import Vue from 'vue';
 
 moment.locale("pt-br");
 
@@ -137,6 +139,25 @@ export default {
     mounted() {
         axios.get('api/users').then(response =>{
             this.users = response.data.users;
+        })
+
+        window.Echo.private(`user.${this.user.id}`).listen('.SendMessage', (e) => {
+            
+            if (this.userActive && this.userActive === e.message.from_user) {
+                this.messages.push(e.message)
+                this.scrollToBottom()
+            } else {
+                const user = this.user.filter((user) => {
+                    if (user.id === e.message.from_user) {
+                        return user
+                    }
+
+                    if (user) {
+                        Vue.set(user[0], 'notification', true)
+                    }
+                })
+            }
+            console.log(e);
         })
     }
 }
