@@ -317,6 +317,12 @@ Apenas após esses passos você deve rodar:
 php artisan migrate
 ~~~
 
+Para reiniciar o docker digite:
+
+~~~bash
+sudo service docker start
+~~~
+
 ## Referências
 
 https://dev.to/nfo94/como-criar-um-container-com-mysql-server-com-docker-e-conecta-lo-no-workbench-linux-1blf

@@ -33,4 +33,12 @@ class MessageController extends Controller
 
         return response()->json(['messages' => $messages], Response::HTTP_OK);
     }
+
+    public function store(Request $request) {
+        $message = new Message();
+        $message->from_user = Auth::user()->id;
+        $message->to_user = $request->to_user;
+        $message->content = filter_var($request->content, FILTER_SANITIZE_STRIPPED);
+        $message->save();
+    }
 }
