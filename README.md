@@ -317,10 +317,21 @@ Apenas após esses passos você deve rodar:
 php artisan migrate
 ~~~
 
-Para reiniciar o docker digite:
+Para iniciar o docker digite:
 
 ~~~bash
 sudo service docker start
+~~~
+
+Comandos para iniciar o código (rodar cada um em um terminal):
+
+~~~bash
+# Para iniciar o servidor da aplicação
+php artisan serve 
+# Para buildar a aplicação
+npm run watch
+# Para iniciar o websockets
+php artisan websockets:serve
 ~~~
 
 ## Referências
