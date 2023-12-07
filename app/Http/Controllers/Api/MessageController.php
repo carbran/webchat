@@ -37,6 +37,7 @@ class MessageController extends Controller
     }
 
     public function store(Request $request) {
+
         $message = new Message();
         $message->from_user = Auth::user()->id;
         $message->to_user = $request->to_user;
@@ -44,5 +45,9 @@ class MessageController extends Controller
         $message->save();
 
         Event::dispatch(new SendMessage($message, $request->to_user));
+        // broadcast(new SendMessage($message, $request->to_user))->toOthers();
+        // Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
+        //     return $user->id === Order::findOrNew($orderId)->user_id;
+        // });
     }
 }

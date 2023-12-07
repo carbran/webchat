@@ -76,8 +76,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios'
 import moment from 'moment'
 import store from '../store'
-import Echo from 'laravel-echo';
-import Vue from 'vue';
+import { watchEffect } from 'vue'
 
 moment.locale("pt-br");
 
@@ -96,11 +95,6 @@ export default {
         }
     },
     methods: {
-        scrollToBottom: function() {
-            if(this.messages.length){
-                document.querySelectorAll('.message:last-child')[0].scrollIntoView()
-            }
-        },
         loadMessages: async function(userId) {
 
             axios.get(`api/users/${userId}`).then(response =>{
@@ -134,6 +128,11 @@ export default {
         },
         formatDate: function (date) {
             return moment(date).format('DD/MM/YY HH:mm');
+        },
+        scrollToBottom: function() {
+            if(this.messages.length){
+                document.querySelectorAll('.message:last-child')[0].scrollIntoView()
+            }
         }
     },
     mounted() {
@@ -143,21 +142,22 @@ export default {
 
         window.Echo.private(`user.${this.user.id}`).listen('.SendMessage', (e) => {
             
-            if (this.userActive && this.userActive === e.message.from_user) {
+            if (this.userActive && this.userActive.id === e.message.from_user) {
                 this.messages.push(e.message)
                 this.scrollToBottom()
             } else {
-                const user = this.user.filter((user) => {
+                const user = this.users.filter((user) => {
                     if (user.id === e.message.from_user) {
                         return user
                     }
+                })
 
-                    if (user) {
-                        Vue.set(user[0], 'notification', true)
-                    }
+                watchEffect(() => {
+                    if (user[0].notification === undefined || !user[0].notification) {
+                        user[0].notification = true;
+                    } 
                 })
             }
-            console.log(e);
         })
     }
 }
